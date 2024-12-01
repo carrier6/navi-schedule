@@ -7,9 +7,9 @@
 2. 그러면 시간표가 보이는데 그 중에서 거리/시간이 적혀있는 버튼을 누르면 지도가 튀어나오면서 다음 강의실로의 경로를 띄워주는 화면이 나오게 된다.
 
 # 웹 구성
-Front-end: html,css,js, 일부 bootstrap 사용, api요청-jquery(ajax)
-Back-end: AWS EC2, apache2
-그 외: https인증을 위해 AWS Certificate Manager, https연결을 중계하기위해 AWS Application Load Balancer 사용
+Front-end: html,css,js, 일부 bootstrap 사용, api요청-jquery(ajax) <br>
+Back-end: AWS EC2, apache2 <br>
+그 외: https인증을 위해 AWS Certificate Manager, https연결을 중계하기위해 AWS Application Load Balancer 사용 <br>
 
 
 # 향후 개발방향
