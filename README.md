@@ -6,6 +6,12 @@
 1. 먼저 웹사이트 (https://everywhere.my) 에 접속한다.
 2. 그러면 시간표가 보이는데 그 중에서 거리/시간이 적혀있는 버튼을 누르면 지도가 튀어나오면서 다음 강의실로의 경로를 띄워주는 화면이 나오게 된다.
 
+# 웹 구성
+Front-end: html,css,js, 일부 bootstrap 사용, api요청-jquery(ajax)
+Back-end: AWS EC2, apache2
+그 외: https인증을 위해 AWS Certificate Manager, https연결을 중계하기위해 AWS Application Load Balancer 사용
+
+
 # 향후 개발방향
 현재는 프로토타입일 뿐이므로 사용자가 임의로 자신의 시간표로 수정하지 못한다. <br>
 따라서 로그인 기능을 넣어 사용자별로 개인화된 시간표를 수정가능하게 만드는 것이 목표이다.<br>
