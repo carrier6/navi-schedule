@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+    <script
+	src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH"></script>
+    <script type="text/javascript">
+    var map;
+	var marker_s, marker_e, marker_p1, marker_p2;
+	var totalMarkerArr = [];
+	var drawInfoArr = [];
+	var resultdrawArr = [];
+
+	function initTmap() {
+		// 1. 지도 띄우기
+		map = new Tmapv2.Map("map_div", {
+		center : new Tmapv2.LatLng(37.56520450, 126.98702028),
+			width : "100%",
+			height : "400px",
+			zoom : 17,
+			zoomControl : true,
+			scrollwheel : true
+		});
+    }
+    </script>
+
+</head>
+<body onload="initTmap();">
+    <div id="map_wrap" class="map_wrap3">
+        <div id="map_div"></div>
+    </div>
+    <div class="map_act_btn_wrap clear_box"></div>
+    <p id="result"></p>
+
+</body>
+

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simpleMap</title>
+</head>
+<body>
+    <div id="map_wrap" class="map_wrap3">
+        <div id="map_div"></div>
+    </div>
+    <div class="map_act_btn_wrap clear_box"></div>
+    <p id="result"></p>
+    <br />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH"></script>
+    <script type="text/javascript">
+        var map;
+        var marker_s, marker_e, marker_p1, marker_p2;
+        var totalMarkerArr = [];
+        var drawInfoArr = [];
+        var resultdrawArr = [];
+
+        function initTmap() {
+            map = new Tmapv2.Map("map_div", {
+                center: new Tmapv2.LatLng(37.56520450, 126.98702028),
+                width: "100%",
+                height: "400px",
+                zoom: 17,
+                zoomControl: true,
+                scrollwheel: true
+            });
+
+            marker_s = new Tmapv2.Marker({
+                position: new Tmapv2.LatLng(37.564991, 126.983937),
+                icon: "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_s.png",
+                iconSize: new Tmapv2.Size(24, 38),
+                map: map
+            });
+
+            marker_e = new Tmapv2.Marker({
+                position: new Tmapv2.LatLng(37.566158, 126.988940),
+                icon: "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_e.png",
+                iconSize: new Tmapv2.Size(24, 38),
+                map: map
+            });
+
+            var headers = { appKey: "kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH" };
+
+            $.ajax({
+                method: "POST",
+                headers: headers,
+                url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
+                async: true,
+                data: {
+                    startX: "126.983937",
+                    startY: "37.564991",
+                    endX: "126.988940",
+                    endY: "37.566158",
+                    reqCoordType: "WGS84GEO",
+                    resCoordType: "EPSG3857",
+                    startName: "출발지",
+                    endName: "도착지"
+                },
+                success: function (response) {
+                    var resultData = response.features;
+                    var tDistance = "총 거리: " + (resultData[0].properties.totalDistance / 1000).toFixed(1) + "km,";
+                    var tTime = " 총 시간: " + (resultData[0].properties.totalTime / 60).toFixed(0) + "분";
+                    $("#result").text(tDistance + tTime);
+
+                    if (resultdrawArr.length > 0) {
+                        for (var i in resultdrawArr) {
+                            resultdrawArr[i].setMap(null);
+                        }
+                        resultdrawArr = [];
+                    }
+                    
+                    drawInfoArr = [];
+
+                    resultData.forEach(function (item) {
+                        if (item.geometry.type === "LineString") {
+                            item.geometry.coordinates.forEach(function (coord) {
+                                var latlng = new Tmapv2.Point(coord[0], coord[1]);
+                                var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(latlng);
+                                var convertChange = new Tmapv2.LatLng(convertPoint._lat, convertPoint._lng);
+                                drawInfoArr.push(convertChange);
+                            });
+                        }
+                    });
+
+                    drawLine(drawInfoArr);
+                },
+                error: function (request, status, error) {
+                    console.error("code:" + request.status + "\nmessage:" + request.responseText + "\nerror:" + error);
+                }
+            });
+        }
+
+        function drawLine(arrPoint) {
+            var polyline = new Tmapv2.Polyline({
+                path: arrPoint,
+                strokeColor: "#DD0000",
+                strokeWeight: 4,
+                map: map
+            });
+            resultdrawArr.push(polyline);
+        }
+    </script>
+    <script>
+        window.onload = initTmap;
+    </script>
+</body>
+</html>

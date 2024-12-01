@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script
+	src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH"></script>
+<script type="text/javascript">
+	var map;
+	var marker_s, marker_e, marker_p1, marker_p2;
+	var totalMarkerArr = [];
+	var drawInfoArr = [];
+	var resultdrawArr = [];
+	//0=도서관, 1= 11호관, 2=21호관, 3=51호관, 4=55호관, 5=봉림관, 6=사림관
+	const map_xy = [{x: 128.691101, y: 35.246059},{x: 128.692067, y: 35.246512},
+					{x: 128.690891, y: 35.247634},{x: 128.697098, y: 35.242515},
+					{x: 128.695837, y: 35.241679},{x: 128.693905, y: 35.246167},{x: 128.694955, y: 35.242573}];
+	const StartEnd = [
+				{sx: map_xy[1].x, sy: map_xy[1].y, ex: map_xy[5].x, ey: map_xy[5].y},
+				{sx: map_xy[5].x, sy: map_xy[5].y, ex: map_xy[2].x, ey: map_xy[2].y},
+				{sx: map_xy[4].x, sy: map_xy[4].y, ex: map_xy[3].x, ey: map_xy[3].y},
+				{sx: map_xy[1].x, sy: map_xy[1].y, ex: map_xy[0].x, ey: map_xy[0].y},
+				{sx: map_xy[0].x, sy: map_xy[0].y, ex: map_xy[2].x, ey: map_xy[2].y},
+				{sx: map_xy[4].x, sy: map_xy[4].y, ex: map_xy[6].x, ey: map_xy[6].y},
+				{sx: map_xy[6].x, sy: map_xy[6].y, ex: map_xy[4].x, ey: map_xy[4].y}]
+	function loadTimeDistance() {
+		
+		
+		
+		for(let i = 0; i<7; i++){
+		
+
+
+
+			var headers = {}; 
+			headers["appKey"]="kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH";
+
+		$.ajax({
+				method : "POST",
+				headers : headers,
+				url : "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
+				async : true,
+				data : {
+					"startX" : StartEnd[i].sx,
+					"startY" : StartEnd[i].sy,
+					"endX" : StartEnd[i].ex,
+					"endY" : StartEnd[i].ey,
+					"reqCoordType" : "WGS84GEO",
+					"resCoordType" : "EPSG3857",
+					"startName" : "출발지",
+					"endName" : "도착지"
+				},
+				success : function(response) {
+					var resultData = response.features;
+
+					//결과 출력
+					var tDistance = ""
+							+ ((resultData[0].properties.totalDistance) / 1000)
+									.toFixed(1) + "km";
+					var tTime = "/"
+							+ ((resultData[0].properties.totalTime) / 60)
+									.toFixed(0) + "분";
+					//버튼에 전송
+					var TD = document.getElementById(i);
+					TD.textContent = tDistance+tTime;
+								}
+					
+						})
+
+		}
+	}
+
+	function initTmap(button) {
+		var i = 0;
+		var buttonId = button.id;
+		//버튼 id값 i에 연동
+		i = buttonId;
+
+		//지도 초기화
+		if(map){
+			delete map.center;
+			delete map.width;
+			delete map.height;
+			const parent = document.getElementById("map_div");
+			alert(parent);
+			parent.innerHTML = "";
+			marker_s.setMap(null);
+			marker_e.setMap(null);
+			alert("im working");
+			console.log("working~")
+		}
+
+		// 1. 지도 띄우기
+		map = new Tmapv2.Map("map_div", {
+			center : new Tmapv2.LatLng(StartEnd[i].sy, StartEnd[i].sx),
+			width : "100%",
+			height : "500px",
+			zoom : 17,
+			zoomControl : true,
+			scrollwheel : true
+		});
+
+		// 2. 시작, 도착 심볼찍기
+		// 시작
+		marker_s = new Tmapv2.Marker(
+				{
+					position : new Tmapv2.LatLng(StartEnd[i].sy,StartEnd[i].sx),
+					icon : "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_s.png",
+					iconSize : new Tmapv2.Size(24, 38),
+					map : map
+				});
+
+		// 도착
+		marker_e = new Tmapv2.Marker(
+				{
+					position : new Tmapv2.LatLng(StartEnd[i].ey,StartEnd[i].ex),
+					icon : "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_e.png",
+					iconSize : new Tmapv2.Size(24, 38),
+					map : map
+				});
+
+		// 3. 경로탐색 API 사용요청
+		var headers = {}; 
+			headers["appKey"]="kJClegxTqJ78Y933UDqlC4DlwcYKF0ow8eoWc8EH";
+
+		$.ajax({
+				method : "POST",
+				headers : headers,
+				url : "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
+				async : true,
+				data : {
+					"startX" : StartEnd[i].sx,
+					"startY" : StartEnd[i].sy,
+					"endX" : StartEnd[i].ex,
+					"endY" : StartEnd[i].ey,
+					"reqCoordType" : "WGS84GEO",
+					"resCoordType" : "EPSG3857",
+					"startName" : "출발지",
+					"endName" : "도착지"
+				},
+				success : function(response) {
+					var resultData = response.features;
+
+					//결과 출력
+					var tDistance = "총 거리 : "
+							+ ((resultData[0].properties.totalDistance) / 1000)
+									.toFixed(1) + "km,";
+					var tTime = " 총 시간 : "
+							+ ((resultData[0].properties.totalTime) / 60)
+									.toFixed(0) + "분";
+					
+					$("#result").text(tDistance + tTime);
+					
+					//기존 그려진 라인 & 마커가 있다면 초기화
+					if (resultdrawArr.length > 0) {
+						for ( var i in resultdrawArr) {
+							resultdrawArr[i]
+									.setMap(null);
+						}
+						resultdrawArr = [];
+					}
+					
+					drawInfoArr = [];
+
+					for ( var i in resultData) { //for문 [S]
+						var geometry = resultData[i].geometry;
+						var properties = resultData[i].properties;
+						var polyline_;
+
+
+						if (geometry.type == "LineString") {
+							for ( var j in geometry.coordinates) {
+								// 경로들의 결과값(구간)들을 포인트 객체로 변환 
+								var latlng = new Tmapv2.Point(
+										geometry.coordinates[j][0],
+										geometry.coordinates[j][1]);
+								// 포인트 객체를 받아 좌표값으로 변환
+								var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(
+										latlng);
+								// 포인트객체의 정보로 좌표값 변환 객체로 저장
+								var convertChange = new Tmapv2.LatLng(
+										convertPoint._lat,
+										convertPoint._lng);
+								// 배열에 담기
+								drawInfoArr.push(convertChange);
+							}
+						} else {
+							var markerImg = "";
+							var pType = "";
+							var size;
+
+							if (properties.pointType == "S") { //출발지 마커
+								markerImg = "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_s.png";
+								pType = "S";
+								size = new Tmapv2.Size(24, 38);
+							} else if (properties.pointType == "E") { //도착지 마커
+								markerImg = "https://tmapapi.tmapmobility.com/upload/tmap/marker/pin_r_m_e.png";
+								pType = "E";
+								size = new Tmapv2.Size(24, 38);
+							} else { //각 포인트 마커
+								markerImg = "http://topopen.tmap.co.kr/imgs/point.png";
+								pType = "P";
+								size = new Tmapv2.Size(8, 8);
+							}
+
+							// 경로들의 결과값들을 포인트 객체로 변환 
+							var latlon = new Tmapv2.Point(
+									geometry.coordinates[0],
+									geometry.coordinates[1]);
+
+							// 포인트 객체를 받아 좌표값으로 다시 변환
+							var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(
+									latlon);
+
+							var routeInfoObj = {
+								markerImage : markerImg,
+								lng : convertPoint._lng,
+								lat : convertPoint._lat,
+								pointType : pType
+							};
+
+							// Marker 추가
+							marker_p = new Tmapv2.Marker(
+									{
+										position : new Tmapv2.LatLng(
+												routeInfoObj.lat,
+												routeInfoObj.lng),
+										icon : routeInfoObj.markerImage,
+										iconSize : size,
+										map : map
+									});
+						}
+					}//for문 [E]
+					drawLine(drawInfoArr);
+				},
+				error : function(request, status, error) {
+					console.log("code:" + request.status + "\n"
+							+ "message:" + request.responseText + "\n"
+							+ "error:" + error);
+				}
+			});
+
+	}
+
+	function addComma(num) {
+		var regexp = /\B(?=(\d{3})+(?!\d))/g;
+		return num.toString().replace(regexp, ',');
+	}
+	
+	function drawLine(arrPoint) {
+		var polyline_;
+
+		polyline_ = new Tmapv2.Polyline({
+			path : arrPoint,
+			strokeColor : "#DD0000",
+			strokeWeight : 4,
+			map : map
+		});
+		resultdrawArr.push(polyline_);
+	}
+</script>
+    <style>
+        thead,tfoot {
+  background-color: #2c5e77;
+  color: #fff;
+}
+
+tbody {
+  background-color: #e4f0f5;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid rgb(140 140 140);
+  font-family: sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  
+}
+
+caption {
+  caption-side: bottom;
+  padding: 10px;
+}
+
+th,
+td {
+  border: 0.1em solid rgb(160 160 160);
+  padding: 4px 5px;
+  font-size: 0.6rem;
+  text-align: center;
+  min-width: 40px;
+  max-width: 100px;
+}
+
+
+/*테이블 중간 정렬*/
+#main {
+  display: flex;
+  justify-content: center;
+  table-layout:fixed;
+  height: 800px;
+  overflow-x: auto; 
+}
+
+/*위치 부분 색깔*/
+tr td div{  
+  background-color: gray;
+}
+
+tr td a{
+  text-decoration: none;
+  word-break:break-all;
+}
+
+/*공강 블럭 안보이게*/
+.gong{
+  visibility: hidden;
+}
+/*점심시간 노랗게*/
+.lunchTime{
+	background-color:bisque;
+}
+/*버튼 글자 사이즈 조정*/
+button{
+	font-size: 0.5rem !important;
+	padding: .3rem .6rem !important;
+}
+table{
+	width: 30%;
+	height: 600px;
+}
+    </style>
+</head>
+<body onload="loadTimeDistance()">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  
+  <div id="main">
+    <table>
+        <caption>
+          시간표
+        </caption>
+        <thead>
+          <tr>
+            <th>time</th>
+            <th>time2</th>
+            <th>월</th>
+            <th>화</th>
+            <th>수</th>
+            <th>목</th>
+            <th>금</th>
+          </tr>
+        </thead>
+        <tbody>
+            
+          <tr>
+            <th rowspan="2">9시</th>
+            <th scope="row">1A</th>
+            <td rowspan="7" class="gong"><a href="#">공강</a><div>2 min</div></td>
+            <td rowspan="3" class="gong"><a href="#">공강</a><div>2 min</div></td>
+            <td rowspan="6" class="gong"><a href="#">공강</a><div>2 min</div></td>
+            <td rowspan="3"><a href="#">과학기술글쓰기</a><div>11204</div>
+				<button class="btn btn-outline-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="3">Toggle right offcanvas</button>
+			</td>
+            <td rowspan="6"><a href="#">이산수학</a><div>55102</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="5">Toggle right offcanvas</button></td>
+          </tr>
+          <tr>
+            <th scope="row">1B</th>
+            
+            
+          </tr>
+          <tr>
+            <th rowspan="2">10시</th>
+            <th scope="row">2A</th>
+            
+            
+            
+          </tr>
+          <tr>
+            <th scope="row">2B</th>
+            <td rowspan="3"><a href="#">과학기술글쓰기</a><div>11204</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="0">Toggle right offcanvas</button>
+			</td>
+            <td rowspan="3"><a href="#">도서관(자습)</a><div>um</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="4">Toggle right offcanvas</button>
+			</td>
+          </tr>
+          
+          <tr>
+            <th rowspan="2">11시</th>
+            <th scope="row">3A</th>
+			
+            
+          </tr>
+          <tr>
+            <th scope="row">3B</th>
+          </tr>
+          <tr>
+            <th rowspan="2">12시</th>
+            <th scope="row">4A</th>
+            <td rowspan="3" class="lunchTime"><a href="#">봉림관</a><div>um</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="1">Toggle right offcanvas</button>
+			</td>
+            <td rowspan="4"><a href="#">인공지능의 시대</a><div>55110</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="2">Toggle right offcanvas</button>
+			</td>
+            <td rowspan="3"><a href="#">현대사회와 회계</a><div>21218</div></td>
+            <td rowspan="2" class="lunchTime"><a href="#">사림관</a><div>um</div>
+				<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="initTmap(this);" id="6">Toggle right offcanvas</button>
+			</td>
+          </tr>
+          <tr>
+            <th scope="row">4B</th>
+            <td rowspan="3"><a href="#">기업가정신과뭐시기</a><div>online</div></td>
+          </tr>
+          <tr>
+            <th rowspan="2">13시</th>
+            <th scope="row">5A</th>
+            <td rowspan="4"><a href="#">컴퓨팅사고력</a><div>55110</div></td>
+          </tr>
+          <tr>
+            <th scope="row">5B</th>
+            <td rowspan="3"><a href="#">현대사회와 회계</a><div>21218</div></td>
+            <td rowspan=11" class="gong"><a href="#">공강</a><div>2 min</div></td>
+          </tr>
+          <tr>
+            <th rowspan="2">14시</th>
+            <th scope="row">6A</th>
+            <td rowspan="10" class="gong"><a href="#">공강</a><div>2 min</div></td>
+            <td rowspan="8"><a href="#">컴퓨터프로그래밍</a><div>51104</div></td>
+          </tr>
+          <tr>
+            <th scope="row">6B</th>
+          </tr>
+          <tr>
+            <th rowspan="2">15시</th>
+            <th scope="row">7A</th>
+            
+            <td rowspan="8" class="gong"><a href="#">공강</a><div>2 min</div></td>
+            <td rowspan="8" class="gong"><a href="#">공강</a><div>2 min</div></td>
+          </tr>
+          <tr>
+            <th scope="row">7B</th>
+          </tr>
+          <tr>
+            <th rowspan="2">16시</th>
+            <th scope="row">8A</th>
+          </tr>
+          <tr>
+            <th scope="row">8B</th>
+          </tr>
+          <tr>
+            <th rowspan="2">17시</th>
+            <th scope="row">9A</th>
+          </tr>
+          <tr>
+            <th scope="row">9B</th>
+          </tr>
+          <tr>
+            <th rowspan="2">18시</th>
+            <th scope="row">10A</th>
+            <td rowspan="2" class="gong"><a href="#">공강</a><div>2 min</div></td>
+          </tr>
+          <tr>
+            <th scope="row">10B</th>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="7">심층상담</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+  <div class="offcanvas-header">
+    <h5 id="offcanvasRightLabel">지도보기</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div id="map_wrap" class="map_wrap3">
+			<div id="map_div"></div>
+		</div>
+		<div class="map_act_btn_wrap clear_box"></div>
+		<p id="result"></p>
+		<br />
+  </div>
+</div>
+
+</body>
